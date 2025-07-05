@@ -90,3 +90,18 @@ Get-Content .\bot_log.log -Wait
 Opción 3: Python (visor integrado)
 
 python -c "
+
+# App principal
+fastapi==0.110.0
+uvicorn[standard]==0.29.0
+requests==2.31.0
+python-dotenv==1.0.1
+openai==1.30.1
+
+# Pruebas
+pytest==8.4.1
+pytest-asyncio==0.23.7
+anyio==4.3.0
+
+# Opcional para desarrollo (logs más detallados, etc.)
+httpx==0.27.0
