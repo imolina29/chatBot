@@ -1,13 +1,16 @@
 # main.py limpio y optimizado
 
+from config import TELEGRAM_TOKEN, OPENAI_API_KEY, NGROK_URL, ADMIN_CHAT_ID
 from fastapi import FastAPI, Request
 import requests
-import os
 import logging
 from dotenv import load_dotenv
 from openai import OpenAI
 
 # -------------------- Configuración --------------------
+
+# Variable global para controlar estado del bot
+bot_activo = True
 
 logging.basicConfig(
     level=logging.INFO,  # Puedes cambiar a DEBUG si necesitas
@@ -19,10 +22,6 @@ logging.basicConfig(
 )
 
 app = FastAPI()
-load_dotenv(dotenv_path=".env", override=True)
-
-TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
 if not TELEGRAM_TOKEN:
     raise ValueError("TELEGRAM_TOKEN no está definido en el archivo .env")
@@ -50,9 +49,36 @@ async def telegram_webhook(req: Request):
         enviar_mensaje_telegram(chat_id, respuesta)
     return {"status": "ok"}
 
+@app.post("/activar")
+def activar_bot():
+    global bot_activo
+    bot_activo = True
+    logging.info("✅ Bot reactivado manualmente.")
+    return {"status": "ok", "mensaje": "Bot reactivado."}
+
+@app.post("/desactivar")
+def desactivar_bot():
+    global bot_activo
+    bot_activo = False
+    logging.info("⛔ Bot desactivado manualmente.")
+    return {"status": "ok", "mensaje": "Bot desactivado."}
+
+@app.get("/status")
+def status():
+    return {
+        "status": "ok",
+        "bot_activo": bot_activo,
+        "mensaje": "Servidor del bot funcionando correctamente"
+    }
+
 # -------------------- Funciones auxiliares --------------------
+# ID del admin para alertas
 
 async def generar_respuesta(user_input):
+    global bot_activo
+    if not bot_activo:
+        return "El servicio se encuentra temporalmente suspendido por mantenimiento."
+
     context = cargar_contexto()
     prompt = f"Contexto del negocio:\n{context}\n\nUsuario: {user_input}\nAsistente:"
 
@@ -63,10 +89,21 @@ async def generar_respuesta(user_input):
                 {"role": "user", "content": prompt}
             ]
         )
-        return response.choices[0].message.content.strip()
+        respuesta = response.choices[0].message.content.strip()
+        logging.info(f"Respuesta generada: {respuesta}")
+        return respuesta
+
     except Exception as e:
         logging.error(f"Error al consultar OpenAI: {e}")
-        return "Lo siento, hubo un problema al generar la respuesta."
+
+        # Verificar si es por créditos agotados
+        if "insufficient_quota" in str(e).lower() or "You exceeded your current quota" in str(e):
+            bot_activo = False
+            alerta = "⚠️ El bot ha sido desactivado temporalmente por exceder el límite de créditos de OpenAI."
+            enviar_mensaje_telegram(ADMIN_CHAT_ID, alerta)
+            return "⚠️ Actualmente el servicio no está disponible. Estamos solucionando el inconveniente."
+        
+        return "Lo siento, hubo un problema al generar la respuesta. Por favor intenta más tarde."
 
 def enviar_mensaje_telegram(chat_id, texto):
     url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
@@ -90,8 +127,7 @@ def cargar_contexto():
 # -------------------- Utilidad para configurar webhook --------------------
 
 def configurar_webhook():
-    ngrok_url = "https://673d-2800-e2-1b00-133d-88ca-c9fb-b302-510.ngrok-free.app"
-    webhook_url = f"{ngrok_url}/webhook"
+    webhook_url = f"{NGROK_URL}/webhook"
     url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/setWebhook"
 
     try:

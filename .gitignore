@@ -7,3 +7,10 @@ __pycache__/
 
 .env*
 .env*
+# Ignorar variables sensibles
+.env
+.env.*
+*.env
+bot_log.log
+__pycache__/
+*.pyc
