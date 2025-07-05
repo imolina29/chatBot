@@ -1,18 +1,7 @@
-# Entornos virtuales
-venv/
 .env
-
-# Archivos temporales
-*.pyc
-__pycache__/
-
-# Logs
-*.log
 bot_log.log
+__pycache__/
+*.pyc
+.env.*
+*.log
 
-# IDEs
-.vscode/
-.idea/
-
-# Otros
-.DS_Store
