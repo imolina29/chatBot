@@ -1,6 +1,6 @@
 # main.py limpio y optimizado
 
-from config import TELEGRAM_TOKEN, OPENAI_API_KEY, NGROK_URL, ADMIN_CHAT_ID
+from app.config import TELEGRAM_TOKEN, OPENAI_API_KEY, NGROK_URL, ADMIN_CHAT_ID
 from fastapi import FastAPI, Request
 import requests
 import logging
