@@ -8,6 +8,8 @@ from dotenv import load_dotenv
 from openai import OpenAI
 import logging
 from logging.handlers import RotatingFileHandler
+import json
+from datetime import datetime
 
 # -------------------- Configuración --------------------
 
@@ -63,6 +65,7 @@ async def telegram_webhook(req: Request):
     if message and chat_id:
         respuesta = await generar_respuesta(message)
         enviar_mensaje_telegram(chat_id, respuesta)
+        guardar_conversacion(chat_id, message, respuesta)
     return {"status": "ok"}
 
 @app.post("/activar")
@@ -152,3 +155,20 @@ def configurar_webhook():
         logging.info(f"Webhook configurado: {response_json}")
     except Exception as e:
         logging.error(f"Error al configurar webhook: {e}")
+
+# -------------------- Guardar conversaciones en archivos --------------------
+HISTORIAL_PATH = "conversaciones.jsonl"
+
+def guardar_conversacion(chat_id, user_input, respuesta):
+    entrada = {
+        "timestamp": datetime.now().isoformat(),
+        "chat_id": chat_id,
+        "mensaje_usuario": user_input,
+        "respuesta_bot": respuesta
+    }
+    try:
+        with open(HISTORIAL_PATH, "a", encoding="utf-8") as file:
+            file.write(json.dumps(entrada, ensure_ascii=False) + "\n")
+        logging.info(f"📝 Conversación guardada para chat_id {chat_id}")
+    except Exception as e:
+        logging.error(f"❌ Error al guardar conversación: {e}")
