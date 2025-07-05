@@ -6,8 +6,24 @@ import requests
 import logging
 from dotenv import load_dotenv
 from openai import OpenAI
+import logging
+from logging.handlers import RotatingFileHandler
 
 # -------------------- Configuración --------------------
+
+log_formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+
+# Log principal con rotación automática (hasta 5 archivos de 1 MB)
+file_handler = RotatingFileHandler("bot_log.log", maxBytes=1_000_000, backupCount=5)
+file_handler.setFormatter(log_formatter)
+
+console_handler = logging.StreamHandler()
+console_handler.setFormatter(log_formatter)
+
+logging.basicConfig(
+    level=logging.INFO,
+    handlers=[file_handler, console_handler]
+)
 
 # Variable global para controlar estado del bot
 bot_activo = True
