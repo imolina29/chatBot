@@ -14,3 +14,6 @@ __pycache__/
 bot_log.log
 __pycache__/
 *.pyc
+.vscode/
+conversaciones.jsonl*
+.DS_Store
