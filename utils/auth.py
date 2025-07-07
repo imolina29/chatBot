@@ -1,7 +1,14 @@
-from fastapi import Request, HTTPException
-from app.config import API_SECRET_KEY
+# app/utils/auth.py
+
+from fastapi import Request, HTTPException, status
+from app.config import ADMIN_CHAT_ID
 
 async def verificar_autenticacion(request: Request):
-    token = request.headers.get("X-API-Key")
-    if not token or token != API_SECRET_KEY:
-        raise HTTPException(status_code=401, detail="No autorizado")
+    body = await request.json()
+    chat_id = body.get("message", {}).get("chat", {}).get("id")
+
+    if str(chat_id) != str(ADMIN_CHAT_ID):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="❌ No tienes permisos para realizar esta acción."
+        )
