@@ -6,10 +6,15 @@ import requests
 import logging
 from dotenv import load_dotenv
 from openai import OpenAI
-import logging
 from logging.handlers import RotatingFileHandler
 import json
 from datetime import datetime
+from utils.auth import verificar_autenticacion
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+from config import TELEGRAM_TOKEN
+from utils.commands import manejar_comando
 
 # -------------------- Configuración --------------------
 
@@ -63,6 +68,10 @@ async def telegram_webhook(req: Request):
     logging.info(f"Mensaje recibido: {message} de chat_id: {chat_id}")
 
     if message and chat_id:
+        if message.startswith("/"):
+            respuesta = manejar_comando(message)
+        else:
+            respuesta = await generar_respuesta(message)
         respuesta = await generar_respuesta(message)
         enviar_mensaje_telegram(chat_id, respuesta)
         guardar_conversacion(chat_id, message, respuesta)
@@ -89,6 +98,20 @@ def status():
         "bot_activo": bot_activo,
         "mensaje": "Servidor del bot funcionando correctamente"
     }
+
+@app.post("/activar")
+async def activar_bot(request: Request):
+    await verificar_autenticacion(request)
+    global bot_activo
+    bot_activo = True
+    return {"status": "ok", "mensaje": "Bot reactivado"}
+
+@app.post("/desactivar")
+async def desactivar_bot(request: Request):
+    await verificar_autenticacion(request)
+    global bot_activo
+    bot_activo = False
+    return {"status": "ok", "mensaje": "Bot desactivado temporalmente"}
 
 # -------------------- Funciones auxiliares --------------------
 # ID del admin para alertas
@@ -142,6 +165,47 @@ def cargar_contexto():
     except FileNotFoundError:
         logging.warning("Archivo contexto_negocio.txt no encontrado. Usando contexto por defecto.")
         return "Somos un ecommerce que vende ropa y accesorios. Hacemos envíos a todo el país."
+
+def manejar_comando(comando: str) -> str:
+    global bot_activo
+    comando = comando.lower().strip()
+
+    if comando == "/ayuda":
+        return (
+            "📌 *Comandos disponibles:*\n"
+            "/ayuda – Muestra esta ayuda\n"
+            "/estado – Indica si el bot está activo\n"
+            "/reactivar – Reactiva el bot si está desactivado (solo admins)"
+        )
+    elif comando == "/estado":
+        return "✅ El bot está activo." if bot_activo else "🚫 El bot está desactivado temporalmente."
+    elif comando == "/reactivar":
+        # Opcional: podrías validar si el chat_id es del admin aquí
+        bot_activo = True
+        logging.info("🔁 El bot fue reactivado por comando /reactivar.")
+        return "🔁 El bot ha sido reactivado exitosamente."
+    else:
+        return "❓ Comando no reconocido. Usa /ayuda para ver los comandos disponibles."
+    
+import requests
+from config import TELEGRAM_TOKEN
+
+def registrar_comandos_telegram():
+    url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/setMyCommands"
+    comandos = [
+        {"command": "ayuda", "description": "Muestra los comandos disponibles"},
+        {"command": "estado", "description": "Indica si el bot está activo"},
+        {"command": "reactivar", "description": "Reactiva el bot (admin)"},
+    ]
+
+    try:
+        response = requests.post(url, json={"commands": comandos})
+        if response.status_code == 200:
+            print("✅ Comandos registrados exitosamente en Telegram.")
+        else:
+            print(f"⚠️ Error al registrar comandos: {response.status_code} - {response.text}")
+    except Exception as e:
+        print(f"❌ Excepción al registrar comandos: {e}")    
 
 # -------------------- Utilidad para configurar webhook --------------------
 
