@@ -14,14 +14,26 @@ Este es un **bot de asistencia virtual gratuito** desarrollado como MVP (Product
 ---
 
 ## 📁 Estructura del Proyecto
-├── main.py                 # Archivo principal del servidor FastAPI
-├── config.py               # Carga segura de variables sensibles
-├── contexto_negocio.txt    # Base de conocimiento del negocio
-├── bot_log.log             # Archivo de log (ignorado en Git)
-├── .env                    # (ignorado por Git)
-├── .gitignore              # Archivos excluidos del control de versiones
-
----
+virtual_assistance/
+├── app/
+│   ├── __init__.py
+│   ├── main.py
+│   ├── routes/
+│   │   ├── __init__.py
+│   │   └── telegram.py          ← Aquí llega el webhook
+│   ├── services/
+│   │   ├── __init__.py
+│   │   ├── bot.py               ← Lógica del bot (envío, manejo comandos)
+│   │   ├── telegram.py          ← Funciones directas para Telegram API (si usas requests)
+│   │   └── history.py           ← Guardado de conversación
+│   ├── config/
+│   │   ├── __init__.py
+│   │   └── constants.py         ← ASESOR_CHAT_ID u otras constantes
+│   └── utils/
+│       ├── __init__.py
+│       └── conversaciones.py    ← Manejo de sesiones de chat y reenvío
+├── requirements.txt
+└── env/                         ← Tu entorno virtual (ignorado por git)
 
 ## 🛠️ Configuración inicial
 
@@ -39,6 +51,16 @@ configurar_webhook()
 	•	⚠️ Suspensión temporal automática del bot
 	•	🧠 Contexto personalizado desde contexto_negocio.txt
 	•	🧼 Código limpio, modular y optimizado para producción
+
+Mejoras 
+# app/services/bot.py
+
+1. 📦 Imports y configuración inicial
+2. 🧱 Funciones utilitarias
+   - enviar_mensaje()
+   - notificar_error()
+3. 🤖 Comandos del bot (manejar_comando)
+4. 🔁 Funciones auxiliares del bot (normalizar, validaciones)
 
  🧑‍💻 Autor
 	•	Ivan Molina

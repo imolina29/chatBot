@@ -1,102 +1,127 @@
-# app/services/bot.py
-
+import os
 import logging
-from openai import OpenAI
-from app.config import OPENAI_API_KEY, ADMIN_CHAT_ID
-from app.services.telegram import enviar_mensaje_telegram
+import requests
+from dotenv import load_dotenv
+from datetime import datetime
+from utils.mensajeria import enviar_mensaje
+from utils.conversaciones import conversaciones_activas, cerrar_conversacion, reenviar_al_asesor
 
-client = OpenAI(api_key=OPENAI_API_KEY)
-bot_activo = True  # Estado global temporal
+load_dotenv()
 
-# -------------------- Contexto del negocio --------------------
+# --- Configuración de entorno y API ---
+TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
+TELEGRAM_API_URL = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}"
+ASESOR_CHAT_ID = os.getenv("ASESOR_CHAT_ID")  # Opcional
 
-def cargar_contexto() -> str:
+# --- Estado del bot ---
+bot_activo = True
+
+# ==============================
+# 🧱 FUNCIONES UTILITARIAS
+# ==============================
+
+def enviar_mensaje(chat_id: int, texto: str) -> bool:
     try:
-        with open("contexto_negocio.txt", "r", encoding="utf-8") as f:
-            return f.read()
-    except FileNotFoundError:
-        logging.warning("⚠️ contexto_negocio.txt no encontrado. Usando contexto por defecto.")
-        return "Somos un ecommerce que vende ropa y accesorios. Hacemos envíos a todo el país."
-
-# -------------------- Generador de respuestas --------------------
-
-async def generar_respuesta(user_input: str) -> str:
-    global bot_activo
-
-    if not bot_activo:
-        return "⚠️ El servicio está suspendido temporalmente por mantenimiento."
-
-    contexto = cargar_contexto()
-    prompt = f"Contexto del negocio:\n{contexto}\n\nUsuario: {user_input}\nAsistente:"
-
-    try:
-        response = client.chat.completions.create(
-            model="gpt-3.5-turbo",
-            messages=[{"role": "user", "content": prompt}]
+        response = requests.post(
+            f"{TELEGRAM_API_URL}/sendMessage",
+            json={"chat_id": chat_id, "text": texto, "parse_mode": "Markdown"},
+            timeout=10
         )
-        respuesta = response.choices[0].message.content.strip()
-        logging.info(f"✅ Respuesta generada: {respuesta}")
-        return respuesta
-
+        response.raise_for_status()
+        return True
     except Exception as e:
-        logging.error(f"❌ Error al generar respuesta: {e}")
+        logging.error(f"❌ Error enviando mensaje a {chat_id}: {e}")
+        return False
 
-        if "insufficient_quota" in str(e).lower() or "you exceeded your current quota" in str(e).lower():
-            bot_activo = False
-            alerta = "⚠️ Bot desactivado por superar el límite de créditos de OpenAI."
-            enviar_mensaje_telegram(ADMIN_CHAT_ID, alerta)
-            return "⚠️ El servicio no está disponible. Estamos solucionando el problema."
 
-        return "❌ Ocurrió un error. Por favor, intenta más tarde."
+def notificar_error(chat_id: int, error: Exception):
+    logging.error(f"🚨 Error en el bot para chat_id {chat_id}: {error}")
 
-# -------------------- Comandos de Telegram --------------------
+
+# ==============================
+# 🤖 COMANDOS DEL BOT
+# ==============================
 
 def manejar_comando(comando: str, chat_id: int) -> str:
-    comando = comando.lower().strip()
     global bot_activo
+    comando = normalizar_comando(comando)
 
     if comando == "/ayuda":
         return (
             "📌 *Comandos disponibles:*\n"
-            "/creditos – Info sobre creditos\n"
             "/horarios – Info sobre horarios tienda\n"
-            "/productos – Muestra los productos disp\n"
-            "/envios – Info sobre envios"
+            "/productos – Muestra los productos disponibles\n"
+            "/envios – Info sobre envíos\n"
+            "/costos – Info sobre costos de envío\n"
+            "/asesor – Solicitar atención personalizada\n"
+            "/cerrar – Finalizar conversación\n"
+            "/estado – Ver estado del bot y conversaciones activas"
         )
+
     elif comando == "/estado":
-        return "✅ El bot está activo." if bot_activo else "🚫 El bot está desactivado temporalmente."
+        activos = list(conversaciones_activas.keys())
+        if not activos:
+            return "🔍 No hay conversaciones activas en este momento."
+        listado = "\n".join([f"• Usuario ID: `{uid}`" for uid in activos])
+        return f"📊 Conversaciones activas ({len(activos)}):\n{listado}"
+
+    elif comando == "/cerrar":
+        cerrar_conversacion(chat_id)
+        return "👋 Conversación cerrada. Usa /asesor si deseas volver a iniciar una."
+
     elif comando == "/reactivar":
         bot_activo = True
         logging.info("🔁 Bot reactivado manualmente por comando /reactivar.")
         return "🔁 Bot reactivado exitosamente."
+
+    elif comando == "/horarios":
+        return "🕒 Nuestro horario es de lunes a sábado de 8am a 6pm."
+
+    elif comando == "/productos":
+        return "📦 Contamos con los siguientes productos: Relojes Originales, Perfumes y más."
+
+    elif comando == "/envios":
+        return "🚚 Realizamos envíos a todo el país. Tiempo estimado: 2-3 días hábiles."
+
+    elif comando == "/costos":
+        return "💰 Los costos de envío dependen de la transportadora y el destino."
+    
+    elif comando == "/asesor":
+        logging.info(f"📞 Solicitud de asesor humano por chat_id: {chat_id}")
+        mensaje = f"👤 El usuario *{chat_id}* ha solicitado atención personalizada."
+        if ASESOR_CHAT_ID:
+            try:
+                enviar_mensaje(int(ASESOR_CHAT_ID), mensaje)
+            except Exception as e:
+                logging.warning(f"⚠️ Error notificando al asesor: {e}")
+        return "🧑‍💼 En breve un asesor te contactará por este mismo chat."
+    elif comando.startswith("/responder "):
+        partes = comando.split()
+        if len(partes) == 2 and partes[1].isdigit():
+            id_usuario = int(partes[1])
+            conversaciones_activas[id_usuario] = True
+            return (
+                f"✏️ Puedes responder escribiendo el siguiente mensaje:\n\n"
+                f"{id_usuario}: Tu respuesta aquí"
+            )
+        else:
+            return "❌ Uso incorrecto de /responder. Ejemplo: /responder 123456789"
+
     else:
         return "❓ Comando no reconocido. Usa /ayuda para ver los comandos disponibles."
+    
+# ==============================
+# 🔁 FUNCIONES AUXILIARES
+# ==============================
 
+def normalizar_comando(comando: str) -> str:
+    return comando.lower().strip()
 
-def responder_fallback(mensaje: str) -> str:
-    mensaje = mensaje.lower().strip()
-
-    respuestas = {
-        "productos": "🛍 Tenemos Relojs, perfumes y accesorios. Escríbenos para más detalles.",
-        "envíos": "📦 Realizamos envíos a todo el país en 2-5 días hábiles.",
-        "horarios": "🕒 Atendemos de lunes a sabado, de 9:00 a 18:00.",
-        "ayuda": "🤖 Usa palabras como: productos, envíos, horarios. GPT está temporalmente inactivo.",
-    }
-
-    for clave, respuesta in respuestas.items():
-        if clave in mensaje:
-            return respuesta
-
-    return "⚠️ Por el momento solo puedo responder sobre productos, envíos u horarios. Intenta con una de esas palabras clave."
-
-# -------------------- Control manual del bot --------------------
-
-def activar_bot():
-    global bot_activo
-    bot_activo = True
-    logging.info("✅ Bot activado manualmente.")
-
-def desactivar_bot():
-    global bot_activo
-    bot_activo = False
-    logging.info("⛔ Bot desactivado manualmente.")
+def responder_fallback(chat_id: int, mensaje_usuario: str) -> str:
+    logging.info(f"🤷 Respuesta fallback para chat_id: {chat_id} – mensaje: {mensaje_usuario}")
+    return (
+        "🤖 Lo siento, no comprendí tu mensaje.\n"
+        "Puedes usar /ayuda para ver las opciones disponibles, o escribe /asesor para hablar con un humano."
+    )
+def generar_respuesta(chat_id: int, mensaje_usuario: str) -> str:
+    return "🤖 No entendí tu mensaje. Usa /ayuda para ver los comandos disponibles o escribe /asesor para hablar con una persona."
