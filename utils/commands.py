@@ -2,6 +2,7 @@
 import logging
 from utils.creditos import obtener_creditos_openai
 from app.config import ADMIN_CHAT_ID
+from utils.auth import es_admin
 
 # Esta variable la importamos del main (o podrías mover la lógica aquí si prefieres)
 bot_activo = True
@@ -53,8 +54,27 @@ comandos_handler = {
 
 # Función que maneja cualquier comando recibido
 def manejar_comando(comando: str, chat_id: int) -> str:
-    handler = comandos_handler.get(comando)
-    if handler:
-        return handler(chat_id)
+    comando = comando.lower().strip()
+
+    if comando == "/ayuda":
+        return (
+            "📌 *Comandos disponibles:*\n"
+            "/ayuda – Muestra esta ayuda\n"
+            "/estado – Indica si el bot está activo\n"
+            "/reactivar – Reactiva el bot (solo admins)"
+        )
+
+    elif comando == "/estado":
+        return "✅ El bot está activo." if bot_activo else "🚫 El bot está desactivado temporalmente."
+
+    elif comando == "/reactivar":
+        if es_admin(chat_id):
+            global bot_activo
+            bot_activo = True
+            logging.info("🔁 Bot reactivado por administrador.")
+            return "🔁 El bot ha sido reactivado exitosamente."
+        else:
+            return "⛔ No tienes permisos para usar este comando."
+
     else:
-        return "🤖 Comando no reconocido. Usa /ayuda para ver las opciones disponibles."
+        return "❓ Comando no reconocido. Usa /ayuda para ver los comandos disponibles."

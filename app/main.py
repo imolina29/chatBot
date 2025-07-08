@@ -1,5 +1,5 @@
 from fastapi import FastAPI, Request
-from app.config import TELEGRAM_TOKEN, OPENAI_API_KEY, ADMIN_CHAT_ID
+from app.config import TELEGRAM_TOKEN, OPENAI_API_KEY, ADMIN_CHAT_IDS
 from utils.auth import verificar_autenticacion
 from utils.logging_config import configurar_logs
 from app.routes.telegram import router as telegram_router
@@ -11,6 +11,7 @@ from app.services.telegram import (
 import logging
 import json
 from datetime import datetime
+from app.services.bot import enviar_mensaje
 
 # -------------------- Configuración --------------------
 

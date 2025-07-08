@@ -35,7 +35,6 @@ def registrar_comandos_telegram() -> None:
     comandos = [
         {"command": "ayuda", "description": "Muestra los comandos disponibles"},
         {"command": "estado", "description": "Indica si el bot está activo"},
-        {"command": "creditos", "description": "Muestra informaicion de los creditos"},
         {"command": "productos", "description": "Qué vendemos"},
         {"command": "envios", "description": "Tiempos y costos de envío"},
         {"command": "horarios", "description": "Horario de atención"},
