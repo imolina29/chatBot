@@ -21,6 +21,7 @@ from utils.conversaciones import (
 from app.config import ASESORES_CHAT_IDS
 from app.config.constants import ASESOR_CHAT_ID
 from app.config import ADMIN_CHAT_IDS
+from app.db.registrar import registrar_conversacion
 
 router = APIRouter()
 
@@ -48,6 +49,7 @@ async def webhook(request: Request):
                 enviar_mensaje(id_usuario, f"🧑‍💼 Asesor: {respuesta}")
                 asignar_asesor(id_usuario, chat_id)
                 guardar_conversacion(id_usuario, texto, "Respuesta del asesor")
+                registrar_conversacion(id_usuario, respuesta_bot=respuesta)
                 enviar_mensaje(chat_id, f"✅ Mensaje enviado a {id_usuario}:{respuesta}")
                 return {"status": "ok"}
 
@@ -61,6 +63,7 @@ async def webhook(request: Request):
             if cliente_id:
                 enviar_mensaje(cliente_id, f"🧑‍💼 Asesor: {texto}")
                 guardar_conversacion(cliente_id, texto, "Respuesta del asesor")
+                registrar_conversacion(cliente_id, respuesta_bot=texto)
                 return {"status": "ok"}
             else:
                 enviar_mensaje(chat_id, "⚠️ No hay un usuario asignado. Usa /responder <id_usuario> o responde con <id>: mensaje.")
@@ -70,6 +73,8 @@ async def webhook(request: Request):
     if texto.startswith("/"):
         respuesta = manejar_comando(texto, chat_id)
         enviar_mensaje(chat_id, respuesta)
+
+        registrar_conversacion(chat_id, mensaje_usuario=texto, respuesta_bot=respuesta)
 
         if texto.strip().lower() == "/asesor":
             conversaciones_activas[chat_id] = True
@@ -116,6 +121,8 @@ async def webhook(request: Request):
             logging.info(f"💬 Usuario {chat_id} escribió: {texto}")
             guardar_conversacion(chat_id, texto, "Mensaje del usuario")
 
+            registrar_conversacion(chat_id, mensaje_usuario=texto)
+
             asesor_id = obtener_asesor(chat_id)
             if asesor_id:
                 enviar_mensaje(asesor_id, f"👤 Usuario {chat_id} dijo:\n{texto}")
@@ -126,9 +133,11 @@ async def webhook(request: Request):
                 chat_id,
                 "🤖 No hay una conversación activa. Usa /asesor para hablar con alguien o /ayuda para ver opciones."
             )
+            registrar_conversacion(chat_id, mensaje_usuario=texto, respuesta_bot="No hay conversación activa.")
         return {"status": "ok"}
 
     # --- 4. Fallback cuando no hay conversación ---
     respuesta = manejar_comando("/ayuda", chat_id)
     enviar_mensaje(chat_id, "🤖 No hay una conversación activa. Usa /asesor para hablar con alguien o /ayuda para ver opciones.")
+    registrar_conversacion(chat_id, mensaje_usuario=texto, respuesta_bot=respuesta)
     return {"status": "ok"}

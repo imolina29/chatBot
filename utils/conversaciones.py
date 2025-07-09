@@ -1,5 +1,7 @@
 # app/utils/conversaciones.py
 
+from app.db.database import SessionLocal
+from app.db.models import Conversacion
 from typing import Dict
 from datetime import datetime
 import logging
@@ -9,11 +11,24 @@ from app.services.bot import enviar_mensaje  # Solo uno, el válido
 
 conversaciones_activas: Dict[int, bool] = {}
 
-def guardar_conversacion(chat_id: int, mensaje: str, contexto: str):
+def guardar_conversacion(chat_id: int, mensaje_usuario: str, respuesta_bot: str):
     """
     Guarda o loguea una conversación con propósito de trazabilidad.
     """
-    logging.info(f"[{datetime.now()}] ({contexto}) {chat_id}: {mensaje}")
+    try:
+        db = SessionLocal()
+        nueva_conversacion = Conversacion(
+            chat_id=chat_id,
+            mensaje_usuario=mensaje_usuario,
+            respuesta_bot=respuesta_bot,
+            timestamp=datetime.utcnow()
+        )
+        db.add(nueva_conversacion)
+        db.commit()
+        db.close()
+        logging.info(f"[{datetime.now()}] (Guardada en BD) {chat_id}: {mensaje_usuario}")
+    except Exception as e:
+        logging.error(f"❌ Error al guardar conversación en la base de datos: {e}")
 
 def cerrar_conversacion(chat_id: int):
     """
