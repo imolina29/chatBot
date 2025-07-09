@@ -12,11 +12,12 @@ import logging
 import json
 from datetime import datetime
 from app.services.bot import enviar_mensaje
+from app.db.init_db import init_db
 
 # -------------------- Configuración --------------------
 
 configurar_logs()
-
+init_db()
 app = FastAPI()
 app.include_router(telegram_router)
 
