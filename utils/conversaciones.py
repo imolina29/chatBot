@@ -10,6 +10,9 @@ from app.config.constants import ASESOR_CHAT_ID
 from app.services.bot import enviar_mensaje  # Solo uno, el válido
 
 conversaciones_activas: Dict[int, bool] = {}
+# Diccionarios para emparejar cliente con asesor y viceversa
+emparejamientos = {}
+emparejamientos_inverso = {}
 
 def guardar_conversacion(chat_id: int, mensaje_usuario: str, respuesta_bot: str):
     """
@@ -56,10 +59,6 @@ def esta_activa(chat_id: int) -> bool:
 def cerrar_conversacion(chat_id: int):
     conversaciones_activas.pop(chat_id, None)
 
-# Diccionarios para emparejar cliente con asesor y viceversa
-emparejamientos = {}
-emparejamientos_inverso = {}
-
 def asignar_asesor(cliente_id: int, asesor_id: int):
     emparejamientos[cliente_id] = asesor_id
     emparejamientos_inverso[asesor_id] = cliente_id
@@ -89,3 +88,44 @@ def cerrar_conversacion(cliente_id: int):
 
 def esta_activa(cliente_id: int) -> bool:
     return cliente_id in conversaciones_activas
+
+def obtener_cliente_en_conversacion(asesor_id: int) -> int:
+    return obtener_cliente(asesor_id)
+
+def reenviar_al_asesor(chat_id: int, texto: str):
+    """
+    Reenvía automáticamente el mensaje del cliente al asesor general.
+    (solo si no está emparejado con otro asesor aún)
+    """
+    try:
+        mensaje = f"🆕 *Mensaje de usuario* `{chat_id}`:\n{texto}"
+        enviar_mensaje(ASESOR_CHAT_ID, mensaje)
+    except Exception as e:
+        logging.error(f"❌ Error reenviando al asesor: {e}")
+
+def reenviar_a_asesor_asignado(cliente_id: int, texto: str):
+    """
+    Reenvía el mensaje del cliente al asesor asignado en la conversación activa.
+    """
+    asesor_id = obtener_asesor(cliente_id)
+    if asesor_id:
+        try:
+            mensaje = f"📨 *Mensaje del cliente* `{cliente_id}`:\n{texto}"
+            enviar_mensaje(asesor_id, mensaje)
+        except Exception as e:
+            logging.error(f"❌ Error reenviando al asesor asignado: {e}")
+
+def manejar_mensaje_cliente(chat_id: int, texto: str) -> bool:
+    """
+    Si el cliente está emparejado con un asesor, reenvía el mensaje
+    y evita que el bot lo procese automáticamente.
+    
+    Retorna True si el mensaje fue reenviado a un asesor.
+    """
+    if esta_activa(chat_id):
+        asesor_id = obtener_asesor(chat_id)
+        if asesor_id:
+            reenviar_a_asesor_asignado(chat_id, texto)
+            guardar_conversacion(chat_id, texto, "Mensaje del usuario")
+            return True
+    return False

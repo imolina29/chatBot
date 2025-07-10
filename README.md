@@ -1,4 +1,5 @@
 # 🤖 Asistente Virtual por Telegram - MVP
+# 🤖 Chatbot con IA y lógica híbrida
 
 Este es un **bot de asistencia virtual gratuito** desarrollado como MVP (Producto Mínimo Viable) para responder preguntas de clientes usando inteligencia artificial.
 
