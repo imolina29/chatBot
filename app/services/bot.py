@@ -5,6 +5,8 @@ from dotenv import load_dotenv
 from datetime import datetime
 from utils.mensajeria import enviar_mensaje
 from utils.conversaciones import conversaciones_activas, cerrar_conversacion, reenviar_al_asesor
+from app.db.init_db import SessionLocal
+from app.services.productos import buscar_productos
 
 load_dotenv()
 
@@ -124,4 +126,11 @@ def responder_fallback(chat_id: int, mensaje_usuario: str) -> str:
         "Puedes usar /ayuda para ver las opciones disponibles, o escribe /asesor para hablar con un humano."
     )
 def generar_respuesta(chat_id: int, mensaje_usuario: str) -> str:
-    return "🤖 No entendí tu mensaje. Usa /ayuda para ver los comandos disponibles o escribe /asesor para hablar con una persona."
+    try:
+        db = SessionLocal()
+        respuesta = buscar_productos(mensaje_usuario, db)
+        db.close()
+        return respuesta
+    except Exception as e:
+        logging.error(f"❌ Error buscando producto: {e}")
+        return responder_fallback(chat_id, mensaje_usuario)

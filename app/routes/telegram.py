@@ -22,6 +22,7 @@ from app.config import ASESORES_CHAT_IDS
 from app.config.constants import ASESOR_CHAT_ID
 from app.config import ADMIN_CHAT_IDS
 from app.db.registrar import registrar_conversacion
+from app.db.database import get_db_session
 
 router = APIRouter()
 
@@ -73,13 +74,11 @@ async def webhook(request: Request):
     if texto.startswith("/"):
         respuesta = manejar_comando(texto, chat_id)
         enviar_mensaje(chat_id, respuesta)
-
         registrar_conversacion(chat_id, mensaje_usuario=texto, respuesta_bot=respuesta)
 
         if texto.strip().lower() == "/asesor":
             conversaciones_activas[chat_id] = True
             guardar_conversacion(chat_id, texto, "Solicitud de asesor")
-
             for admin_id in ADMIN_CHAT_IDS:
                 enviar_mensaje(admin_id, f"📞 Usuario {chat_id} ha solicitado hablar con un asesor.")
 
@@ -115,28 +114,60 @@ async def webhook(request: Request):
                 enviar_mensaje(chat_id, "❌ Uso incorrecto. Formato correcto:\n/responder <id_usuario>")
             return {"status": "ok"}
 
-# --- 3. Conversación activa con asesor ---
+    # --- 3. Conversación activa con asesor ---
     if chat_id not in ASESORES_CHAT_IDS:  # Es un cliente hablando
         if esta_activa(chat_id):
             logging.info(f"💬 Usuario {chat_id} escribió: {texto}")
             guardar_conversacion(chat_id, texto, "Mensaje del usuario")
-
             registrar_conversacion(chat_id, mensaje_usuario=texto)
 
-            asesor_id = obtener_asesor(chat_id)
-            if asesor_id:
-                enviar_mensaje(asesor_id, f"👤 Usuario {chat_id} dijo:\n{texto}")
-            else:
-                reenviar_al_asesor(chat_id, texto)  # fallback por si no hay emparejamiento
+            # Evitar búsqueda si el mensaje fue un comando como /asesor
+            if texto.strip().lower().startswith("/"):
+                return {"status": "ok"}
+
+            try:
+                from app.services.productos import buscar_productos
+                from app.db.database import SessionLocal
+                db = SessionLocal()
+                productos = buscar_productos(texto, db)
+
+                respuesta = None
+                if respuesta:
+                    registrar_conversacion(chat_id, respuesta_bot=respuesta)
+                if productos:
+                    respuesta = "🔎 Productos encontrados:\n\n"
+                    for producto in productos:
+                        respuesta += (f"📦 {producto.descripcion_producto}\n"
+                                    f"💰 Precio: ${producto.valor_venta:.2f}\n\n")
+                else:
+                    respuesta = "😕 No encontré ningún producto con ese nombre. Puedes intentar con otra palabra o escribir /productos."
+                enviar_mensaje(chat_id, respuesta)
+                registrar_conversacion(chat_id, respuesta_bot=respuesta)
+            except Exception as e:
+                logging.warning(f"❌ Error al buscar productos: {e}")
+                asesor_id = obtener_asesor(chat_id)
+                if asesor_id:
+                    enviar_mensaje(asesor_id, f"👤 Usuario {chat_id} dijo:\n{texto}")
+                else:
+                    reenviar_al_asesor(chat_id, texto)
+            return {"status": "ok"}
         else:
             enviar_mensaje(
-                chat_id,
-                "🤖 No hay una conversación activa. Usa /asesor para hablar con alguien o /ayuda para ver opciones."
-            )
+            chat_id,
+            "🤖 No hay una conversación activa. Usa /asesor para hablar con alguien o /ayuda para ver opciones."
+        )
             registrar_conversacion(chat_id, mensaje_usuario=texto, respuesta_bot="No hay conversación activa.")
+
+    # --- 4. Lógica local si no hay conversación activa ---
+    if not texto.startswith("/") and chat_id not in ASESORES_CHAT_IDS:
+        from app.services.bot import generar_respuesta  # Importación local para evitar ciclos
+        respuesta = generar_respuesta(chat_id, texto)
+
+        enviar_mensaje(chat_id, respuesta)
+        registrar_conversacion(chat_id, mensaje_usuario=texto, respuesta_bot=respuesta)
         return {"status": "ok"}
 
-    # --- 4. Fallback cuando no hay conversación ---
+    # --- 5. Fallback final ---
     respuesta = manejar_comando("/ayuda", chat_id)
     enviar_mensaje(chat_id, "🤖 No hay una conversación activa. Usa /asesor para hablar con alguien o /ayuda para ver opciones.")
     registrar_conversacion(chat_id, mensaje_usuario=texto, respuesta_bot=respuesta)
