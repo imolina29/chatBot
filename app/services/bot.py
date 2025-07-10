@@ -1,4 +1,6 @@
 import os
+import re
+import html
 import logging
 import requests
 from dotenv import load_dotenv
@@ -22,18 +24,55 @@ bot_activo = True
 # 🧱 FUNCIONES UTILITARIAS
 # ==============================
 
+def limpiar_texto(texto: str) -> str:
+    """
+    Limpia el texto eliminando caracteres invisibles o problemáticos,
+    y asegurando que esté en formato seguro para Telegram.
+    """
+    if not texto:
+        return ""
+
+    # Reemplaza espacios invisibles y limpia caracteres extraños
+    texto = texto.replace('\u200b', '')  # Zero-width space
+    texto = re.sub(r'[^\x00-\x7F\u00A1-\uFFFF]+', '', texto)  # Elimina caracteres no UTF-8 válidos
+
+    # Opcional: escapa caracteres conflictivos si se usa Markdown
+    texto = texto.replace('_', '\\_').replace('*', '\\*').replace('[', '\\[').replace('`', '\\`')
+    
+    return texto.strip()
+
 def enviar_mensaje(chat_id: int, texto: str) -> bool:
+    """
+    Envía un mensaje a un chat específico usando la API de Telegram.
+    Retorna True si el mensaje fue enviado con éxito, False si falló.
+    """
     try:
+        texto_limpio = limpiar_texto(texto)
+
+        if not texto_limpio:
+            logging.warning(f"⚠️ Texto vacío o inválido. No se envía mensaje a {chat_id}")
+            return False
+
+        payload = {
+            "chat_id": chat_id,
+            "text": texto_limpio,
+            "parse_mode": "Markdown",  # Asegúrate de que el texto esté escapado si usas esto
+        }
+
+        logging.debug(f"📤 Enviando mensaje a {chat_id}: {texto_limpio}")
+        
         response = requests.post(
             f"{TELEGRAM_API_URL}/sendMessage",
-            json={"chat_id": chat_id, "text": texto, "parse_mode": "Markdown"},
+            json=payload,
             timeout=10
         )
         response.raise_for_status()
         return True
+    except requests.exceptions.HTTPError as http_err:
+        logging.error(f"❌ Error HTTP al enviar mensaje a {chat_id}: {http_err} - {response.text}")
     except Exception as e:
-        logging.error(f"❌ Error enviando mensaje a {chat_id}: {e}")
-        return False
+        logging.error(f"❌ Error general enviando mensaje a {chat_id}: {e}")
+    return False
 
 
 def notificar_error(chat_id: int, error: Exception):
@@ -50,14 +89,17 @@ def manejar_comando(comando: str, chat_id: int) -> str:
 
     if comando == "/ayuda":
         return (
-            "📌 *Comandos disponibles:*\n"
-            "/horarios – Info sobre horarios tienda\n"
-            "/productos – Muestra los productos disponibles\n"
-            "/envios – Info sobre envíos\n"
-            "/costos – Info sobre costos de envío\n"
-            "/asesor – Solicitar atención personalizada\n"
-            "/cerrar – Finalizar conversación\n"
-            "/estado – Ver estado del bot y conversaciones activas"
+            "🤖 *¡Hola! Estoy aquí para ayudarte.*\n\n"
+            "Puedes escribirme directamente para consultar por productos. Ejemplos:\n"
+            "• *¿Tienes relojes?*\n"
+            "• *Vendes perfumes?*\n\n"
+            "📌 También puedes usar estos comandos:\n"
+            "🛍️ /productos – Ver productos disponibles\n"
+            "🕒 /horarios – Horario de atención\n"
+            "🚚 /envios – Información sobre envíos\n"
+            "💸 /costos – Costos de envío\n"
+            "🧑‍💼 /asesor – Hablar con un asesor humano\n"
+            "❌ /cerrar – Finalizar la conversación actual"
         )
 
     elif comando == "/estado":
@@ -77,17 +119,17 @@ def manejar_comando(comando: str, chat_id: int) -> str:
         return "🔁 Bot reactivado exitosamente."
 
     elif comando == "/horarios":
-        return "🕒 Nuestro horario es de lunes a sábado de 8am a 6pm."
+        return "🕒 Nuestro horario es de lunes a sábado de 8:00 a.m. a 6:00 p.m."
 
     elif comando == "/productos":
-        return "📦 Contamos con los siguientes productos: Relojes Originales, Perfumes y más."
+        return "📦 Contamos con los siguientes productos: Relojes originales, Perfumes, Gafas y más. Puedes preguntarme directamente por alguno."
 
     elif comando == "/envios":
-        return "🚚 Realizamos envíos a todo el país. Tiempo estimado: 2-3 días hábiles."
+        return "🚚 Realizamos envíos a todo el país. Tiempo estimado: 2 a 3 días hábiles."
 
     elif comando == "/costos":
-        return "💰 Los costos de envío dependen de la transportadora y el destino."
-    
+        return "💰 Los costos de envío dependen de la transportadora y el destino. Pregunta y te ayudamos con gusto."
+
     elif comando == "/asesor":
         logging.info(f"📞 Solicitud de asesor humano por chat_id: {chat_id}")
         mensaje = f"👤 El usuario *{chat_id}* ha solicitado atención personalizada."
@@ -97,6 +139,7 @@ def manejar_comando(comando: str, chat_id: int) -> str:
             except Exception as e:
                 logging.warning(f"⚠️ Error notificando al asesor: {e}")
         return "🧑‍💼 En breve un asesor te contactará por este mismo chat."
+
     elif comando.startswith("/responder "):
         partes = comando.split()
         if len(partes) == 2 and partes[1].isdigit():
@@ -110,7 +153,7 @@ def manejar_comando(comando: str, chat_id: int) -> str:
             return "❌ Uso incorrecto de /responder. Ejemplo: /responder 123456789"
 
     else:
-        return "❓ Comando no reconocido. Usa /ayuda para ver los comandos disponibles."
+        return "❓ Comando no reconocido. Usa /ayuda para ver las opciones disponibles."
     
 # ==============================
 # 🔁 FUNCIONES AUXILIARES
