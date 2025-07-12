@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Text, DateTime, Float
+from sqlalchemy import Column, Integer, String, Text, DateTime, Float, Boolean
 from datetime import datetime
 from .database import Base
 
@@ -20,3 +20,7 @@ class Producto(Base):
     cantidad = Column(Integer, nullable=False)
     valor_unitario = Column(Float, nullable=False)
     valor_venta = Column(Float, nullable=False)
+        # ✅ Nuevas columnas
+    categoria = Column(String, default="General")
+    stock = Column(Integer, default=0)
+    activo = Column(Boolean, default=True)

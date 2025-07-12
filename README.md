@@ -63,6 +63,25 @@ Mejoras
 3. 🤖 Comandos del bot (manejar_comando)
 4. 🔁 Funciones auxiliares del bot (normalizar, validaciones)
 
+
+# monorepo
+
+	VirtualAssistance/
+	│
+	├── app/                # Código del backend (FastAPI)
+	├── frontend/ 
+		/src/
+			├── components/          # Componentes reutilizables
+			├── pages/               # Páginas como AgregarProducto.jsx, Inicio.jsx
+			├── services/            # Lógica para llamadas a la API
+			├── App.jsx
+			├── index.jsx          # Código del frontend (React)
+	├── env/                # Entorno virtual
+	├── .env
+	├── requirements.txt
+	├── README.md
+	└── main.py             # Entrada principal de FastAPI
+
  🧑‍💻 Autor
 	•	Ivan Molina
 	•	GitHub: @imolina29
