@@ -177,3 +177,13 @@ def generar_respuesta(chat_id: int, mensaje_usuario: str) -> str:
     except Exception as e:
         logging.error(f"❌ Error buscando producto: {e}")
         return responder_fallback(chat_id, mensaje_usuario)
+    
+def activar_bot():
+    global bot_activo
+    bot_activo = True
+    logging.info("✅ Bot activado manualmente desde endpoint.")
+
+def desactivar_bot():
+    global bot_activo
+    bot_activo = False
+    logging.info("⛔ Bot desactivado manualmente desde endpoint.")
