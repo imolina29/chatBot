@@ -1,0 +1,12 @@
+.admin-container {
+  padding: 30px;
+  max-width: 1000px;
+  margin: auto;
+}
+
+.admin-container h1 {
+  text-align: center;
+  margin-bottom: 30px;
+  color: #333;
+  font-size: 1.8rem;
+}

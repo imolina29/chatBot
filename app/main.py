@@ -1,24 +1,30 @@
 # app/main.py
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, HTTPException, Body
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
+from typing import List
 from app.config import TELEGRAM_TOKEN, OPENAI_API_KEY
 from utils.auth import verificar_autenticacion
 from utils.logging_config import configurar_logs
 from app.routes.telegram import router as telegram_router
 from app.routes.product import router as productos_router
-from app.services.telegram import (
-    registrar_comandos_telegram
-)
+from app.services.telegram import registrar_comandos_telegram
+from app.services.bot import enviar_mensaje
 from app.services.bot import activar_bot, desactivar_bot
 from app.db.init_db import init_db
+from app.schemas import CompraItem
+from typing import List
+import traceback
+from app.db.database import SessionLocal
+from app.db.models import Producto
 
 import logging
 import json
+import sqlite3
 from datetime import datetime
 
 # -------------------- Configuración base --------------------
-
 configurar_logs()
 init_db()
 app = FastAPI()
@@ -90,3 +96,47 @@ def guardar_conversacion(chat_id, user_input, respuesta):
         logging.info(f"📝 Conversación guardada para chat_id {chat_id}")
     except Exception as e:
         logging.error(f"❌ Error al guardar conversación: {e}")
+
+def activar_bot():
+    global bot_activo
+    bot_activo = True
+    logging.info("✅ Bot activado manualmente desde endpoint.")
+
+def desactivar_bot():
+    global bot_activo
+    bot_activo = False
+    logging.info("⛔ Bot desactivado manualmente desde endpoint.")
+
+# -------------------- Finalizar Compra: Descontar Stock --------------------
+
+@app.post("/api/finalizar-compra")
+def finalizar_compra(items: List[CompraItem]):
+    print("📦 Datos recibidos en el backend:", items)
+    db = SessionLocal()
+
+    try:
+        for item in items:
+            print(f"🔍 Validando item: {item}")
+            producto = db.query(Producto).filter(Producto.id == item.id).first()
+            if not producto:
+                raise HTTPException(status_code=404, detail=f"Producto con id {item.id} no encontrado")
+            print(f"📊 Stock actual: {producto.stock}")
+
+            if item.cantidad > producto.stock:
+                raise HTTPException(status_code=400, detail=f"No hay suficiente stock para el producto ID {item.id}")
+
+            producto.stock -= item.cantidad
+            db.add(producto)
+
+        db.commit()
+        logging.info("✅ Compra finalizada y stock actualizado.")
+        return {"mensaje": "Compra finalizada con éxito"}
+
+    except Exception as e:
+        db.rollback()
+        logging.error(f"❌ Error al finalizar compra: {e}")
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Error interno: {str(e)}")
+
+    finally:
+        db.close()

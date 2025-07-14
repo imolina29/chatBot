@@ -1,0 +1,113 @@
+.admin-panel-container {
+  padding: 30px;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.1);
+}
+
+.botonera {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.botonera button {
+  padding: 10px 20px;
+  border: none;
+  background-color: #ddd;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: background 0.2s ease;
+}
+
+.botonera button.activo {
+  background-color: #4CAF50;
+  color: white;
+}
+
+.botonera button:hover:not(.activo) {
+  background-color: #eee;
+}
+
+.contenido-admin {
+  margin-top: 20px;
+}
+
+.admin-panel {
+  padding: 30px;
+  max-width: 1000px;
+  margin: 0 auto;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.admin-panel h1 {
+  font-size: 2rem;
+  margin-bottom: 20px;
+  color: #333;
+}
+
+.admin-panel .nav-buttons {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 25px;
+}
+
+.admin-panel .nav-buttons button {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 6px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  color: #fff;
+  background-color: #888;
+}
+
+.admin-panel .nav-buttons button.active {
+  background-color: #4caf50;
+}
+
+.admin-panel .content-section {
+  background-color: #f9f9f9;
+  padding: 25px;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.admin-panel {
+  padding: 20px;
+}
+
+.nav-buttons {
+  margin-bottom: 20px;
+  display: flex;
+  gap: 10px;
+}
+
+.nav-buttons button {
+  padding: 10px 15px;
+  border: none;
+  border-radius: 8px;
+  background-color: #e0e0e0;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.nav-buttons button:hover {
+  background-color: #d4d4d4;
+}
+
+.nav-buttons .active {
+  background-color: #2196f3;
+  color: white;
+  font-weight: bold;
+}
+
+.content-section {
+  background-color: #f9f9f9;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.06);
+}

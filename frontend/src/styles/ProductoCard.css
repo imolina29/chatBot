@@ -1,0 +1,93 @@
+.producto-card {
+  background-color: #fff;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  padding: 16px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  text-align: center;
+  transition: transform 0.2s ease-in-out;
+}
+
+.producto-card:hover {
+  transform: scale(1.02);
+}
+
+.producto-imagen {
+  width: 100%;
+  height: 180px;
+  overflow: hidden;
+  position: relative;
+}
+
+.producto-imagen img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.badge {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  padding: 5px 10px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: bold;
+  color: white;
+}
+
+.badge.ultimas {
+  background-color: #ff9800;
+}
+
+.badge.agotado {
+  background-color: #f44336;
+}
+
+.producto-info {
+  padding: 15px;
+  text-align: center;
+}
+
+.producto-info h3 {
+  margin: 0 0 10px;
+  font-size: 1.1rem;
+}
+
+.producto-info .categoria {
+  color: #777;
+  font-size: 0.9rem;
+}
+
+.producto-info .precio {
+  font-size: 1.2rem;
+  font-weight: bold;
+  margin: 8px 0;
+  color: #2e7d32;
+}
+
+.producto-info .stock {
+  font-size: 0.9rem;
+  color: #555;
+}
+
+.btn-comprar {
+  margin-top: 12px;
+  padding: 10px 16px;
+  background-color: #4caf50;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.btn-comprar:hover {
+  background-color: #388e3c;
+}
+
+.btn-disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
