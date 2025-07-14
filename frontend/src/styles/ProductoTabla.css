@@ -1,0 +1,48 @@
+.tabla-productos {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+}
+
+.tabla-productos th,
+.tabla-productos td {
+  padding: 12px;
+  border: 1px solid #ddd;
+  text-align: center;
+}
+
+.tabla-productos th {
+  background-color: #f2f2f2;
+  font-weight: bold;
+}
+
+.tabla-productos tr:nth-child(even) {
+  background-color: #f9f9f9;
+}
+
+.tabla-productos tr:hover {
+  background-color: #eaeaea;
+}
+
+.tabla-productos button {
+  margin: 0 4px;
+  padding: 6px 10px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.tabla-productos .editar {
+  background-color: #2196F3;
+  color: white;
+}
+
+.tabla-productos .eliminar {
+  background-color: #f44336;
+  color: white;
+}
+
+.tabla-productos .toggle {
+  background-color: #4CAF50;
+  color: white;
+}

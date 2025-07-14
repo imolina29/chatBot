@@ -1,0 +1,81 @@
+/* src/styles/Carrito.css */
+
+.carrito-container {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.carrito-card {
+  background-color: #fdfdfd;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.carrito-lista {
+  list-style: none;
+  padding: 0;
+}
+
+.carrito-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px dashed #ccc;
+}
+
+.btn-eliminar {
+  background: #ff4d4f;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 10px;
+  cursor: pointer;
+}
+
+.carrito-footer {
+  margin-top: 20px;
+}
+
+.carrito-botones {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.btn-vaciar {
+  background-color: #777;
+  color: white;
+  padding: 10px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.btn-finalizar {
+  background-color: #28a745;
+  color: white;
+  padding: 10px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.carrito-mensaje {
+  padding: 10px;
+  margin-bottom: 20px;
+  border-radius: 6px;
+  text-align: center;
+  font-weight: bold;
+  background-color: #e0ffe0;
+  color: #155724;
+  border: 1px solid #a3d9a5;
+}
+
+.carrito-vacio {
+  text-align: center;
+  font-style: italic;
+  color: #888;
+}

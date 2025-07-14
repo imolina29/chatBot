@@ -20,3 +20,8 @@ class ProductoResponseSchema(ProductoSchema):
 
     class Config:
         orm_mode = True
+
+
+class CompraItem(BaseModel):
+    id: int
+    cantidad: int

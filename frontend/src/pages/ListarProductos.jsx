@@ -1,6 +1,7 @@
+// src/pages/ListarProductos.jsx
 import React, { useEffect, useState } from 'react';
 import api from '../api/axios';
-import axios from '../api/axios';
+import '../styles/ListarProductos.css';
 
 const ListarProductos = () => {
   const [productos, setProductos] = useState([]);
@@ -19,9 +20,9 @@ const ListarProductos = () => {
   }, []);
 
   return (
-    <div>
-      <h1>📦 Productos en Inventario</h1>
-      <table border="1" cellPadding="10" style={{ width: '100%', marginTop: '20px' }}>
+    <div className="contenedor-listado">
+      <h1 className="titulo-lista">📦 Productos en Inventario</h1>
+      <table className="tabla-productos">
         <thead>
           <tr>
             <th>ID</th>
@@ -35,14 +36,14 @@ const ListarProductos = () => {
         </thead>
         <tbody>
           {productos.length > 0 ? (
-            productos.map(prod => (
+            productos.map((prod) => (
               <tr key={prod.id}>
                 <td>{prod.id}</td>
                 <td>{prod.descripcion_producto}</td>
                 <td>{prod.categoria}</td>
                 <td>{prod.cantidad}</td>
-                <td>{prod.valor_unitario}</td>
-                <td>{prod.valor_venta}</td>
+                <td>${prod.valor_unitario}</td>
+                <td>${prod.valor_venta}</td>
                 <td>{prod.stock}</td>
               </tr>
             ))

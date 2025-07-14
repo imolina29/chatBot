@@ -1,0 +1,62 @@
+/* src/styles/ListarProductos.css */
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+  background-color: #fff;
+  box-shadow: 0 0 8px rgba(0,0,0,0.05);
+}
+
+th, td {
+  border: 1px solid #eaeaea;
+  padding: 12px;
+  text-align: left;
+}
+
+th {
+  background-color: #f4f4f4;
+  font-weight: bold;
+}
+
+.estado-activo {
+  color: green;
+  font-weight: bold;
+}
+
+.estado-inactivo {
+  color: red;
+  font-weight: bold;
+}
+
+.estado-cargando {
+  color: #999;
+}
+
+.bot-botones button,
+.btn-agregar {
+  margin-top: 10px;
+  margin-right: 10px;
+  padding: 10px 15px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.btn-activar {
+  background-color: #4caf50;
+  color: white;
+}
+
+.btn-desactivar {
+  background-color: #f44336;
+  color: white;
+}
+
+.btn-agregar {
+  background-color: #2196f3;
+  color: white;
+  text-decoration: none;
+  display: inline-block;
+}
