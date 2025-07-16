@@ -27,6 +27,10 @@ class ProductoResponseSchema(ProductoSchema):
     class Config:
         orm_mode = True
 
+class CompraItem(BaseModel):
+    id: int
+    cantidad: int
+
 
 # Crear producto
 @router.post("/", response_model=dict)
@@ -75,3 +79,20 @@ def eliminar_producto(producto_id: int, db: Session = Depends(get_db_session)):
     db.delete(producto)
     db.commit()
     return {"mensaje": "🗑️ Producto eliminado"}
+
+@router.post("/api/finalizar-compra")
+def finalizar_compra(items: List[CompraItem], db: Session = Depends(get_db_session)):
+    for item in items:
+        producto = db.query(Producto).filter(Producto.id == item.id).first()
+
+        if not producto:
+            raise HTTPException(status_code=404, detail=f"Producto con id {item.id} no encontrado")
+
+        if producto.stock < item.cantidad:
+            raise HTTPException(status_code=400, detail=f"Stock insuficiente para '{producto.descripcion_producto}'")
+
+        producto.stock -= item.cantidad
+        db.add(producto)
+
+    db.commit()
+    return {"message": "Compra finalizada exitosamente"}

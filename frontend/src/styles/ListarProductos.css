@@ -1,62 +1,54 @@
-/* src/styles/ListarProductos.css */
+.contenedor-listado {
+  padding: 20px;
+  background-color: #fff;
+}
 
-table {
+.titulo-lista {
+  text-align: center;
+  margin-bottom: 20px;
+  color: #222;
+}
+
+.tabla-productos {
   width: 100%;
   border-collapse: collapse;
-  margin-top: 20px;
-  background-color: #fff;
-  box-shadow: 0 0 8px rgba(0,0,0,0.05);
+  font-size: 0.95rem;
 }
 
-th, td {
-  border: 1px solid #eaeaea;
-  padding: 12px;
-  text-align: left;
+.tabla-productos th,
+.tabla-productos td {
+  border: 1px solid #ddd;
+  padding: 10px;
+  text-align: center;
 }
 
-th {
-  background-color: #f4f4f4;
+.tabla-productos th {
+  background-color: #f8f8f8;
   font-weight: bold;
 }
 
-.estado-activo {
-  color: green;
-  font-weight: bold;
-}
-
-.estado-inactivo {
+.stock-bajo {
   color: red;
   font-weight: bold;
+  margin-left: 6px;
 }
 
-.estado-cargando {
-  color: #999;
-}
-
-.bot-botones button,
-.btn-agregar {
-  margin-top: 10px;
-  margin-right: 10px;
-  padding: 10px 15px;
+.btn-editar,
+.btn-eliminar {
+  margin: 0 5px;
+  padding: 6px 10px;
+  font-size: 0.8rem;
   border: none;
-  border-radius: 6px;
   cursor: pointer;
-  font-weight: bold;
+  border-radius: 5px;
 }
 
-.btn-activar {
-  background-color: #4caf50;
+.btn-editar {
+  background-color: #4CAF50;
   color: white;
 }
 
-.btn-desactivar {
+.btn-eliminar {
   background-color: #f44336;
   color: white;
-}
-
-.btn-agregar {
-  background-color: #2196f3;
-  color: white;
-  text-decoration: none;
-  display: inline-block;
 }

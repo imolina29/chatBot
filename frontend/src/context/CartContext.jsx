@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { toast } from 'react-toastify';
 
 const CartContext = createContext();
 
@@ -13,25 +14,51 @@ export const CartProvider = ({ children }) => {
   }, [carrito]);
 
   const agregarProducto = (producto) => {
-    setCarrito(carrito => {
-    const existente = carrito.find(p => p.id === producto.id);
-    if (existente) {
-        return carrito.map(p =>
-        p.id === producto.id ? { ...p, cantidad: p.cantidad + 1 } : p
-      );
-    } 
-    return [...carrito, { ...producto, cantidad:1 }];
-  });
-};
+    if (producto.stock === 0) {
+      toast.error(`❌ "${producto.descripcion_producto}" está agotado`);
+      return;
+    }
+
+    setCarrito((carritoAnterior) => {
+      const existente = carritoAnterior.find(p => p.id === producto.id);
+
+      if (existente) {
+        if (existente.cantidad >= producto.stock) {
+          toast.warning(`⚠️ Ya agregaste todas las unidades disponibles de "${producto.descripcion_producto}"`);
+          return carritoAnterior;
+        }
+
+        toast.success(`✅ Se agregó otra unidad de "${producto.descripcion_producto}"`);
+        return carritoAnterior.map(p =>
+          p.id === producto.id
+            ? { ...p, cantidad: p.cantidad + 1 }
+            : p
+        );
+      }
+
+      toast.success(`✅ "${producto.descripcion_producto}" agregado al carrito`);
+      return [...carritoAnterior, { ...producto, cantidad: 1 }];
+    });
+  };
 
   const quitarProducto = (id) => {
-    setCarrito(carrito.filter(p => p.id !== id));
+    setCarrito((carrito) => carrito.filter((p) => p.id !== id));
   };
 
   const vaciarCarrito = () => setCarrito([]);
 
+  const actualizarCantidad = (id, nuevaCantidad) => {
+    setCarrito(prev =>
+      prev.map(p =>
+        p.id === id
+          ? { ...p, cantidad: nuevaCantidad }
+          : p
+      )
+    );
+  };
+
   return (
-    <CartContext.Provider value={{ carrito, agregarProducto, quitarProducto, vaciarCarrito }}>
+    <CartContext.Provider value={{ carrito, agregarProducto, quitarProducto, vaciarCarrito, actualizarCantidad }}>
       {children}
     </CartContext.Provider>
   );

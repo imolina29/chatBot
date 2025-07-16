@@ -79,3 +79,25 @@
   font-style: italic;
   color: #888;
 }
+
+.carrito-cantidad {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.carrito-cantidad button {
+  background-color: #eee;
+  border: none;
+  padding: 4px 8px;
+  font-size: 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.carrito-cantidad button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
