@@ -5,7 +5,7 @@ import api from '../api/axios';
 import '../styles/Carrito.css';
 
 const Carrito = () => {
-  const { carrito, quitarProducto, vaciarCarrito } = useCart();
+  const { carrito, quitarProducto, vaciarCarrito, actualizarCantidad } = useCart();
   const [mensaje, setMensaje] = useState('');
   const total = carrito.reduce((acc, item) => acc + item.valor_venta * item.cantidad, 0);
 
@@ -47,9 +47,26 @@ const Carrito = () => {
               <li key={item.id} className="carrito-item">
                 <div>                  
                     <strong>📦 {item.descripcion_producto}</strong>
-                  <p>
-                    Cantidad: {item.cantidad} | Total: ${item.valor_venta * item.cantidad}
-                  </p></div>
+                    <div className="carrito-cantidad">
+                      <button
+                        onClick={() => actualizarCantidad(item.id, Math.max(1, item.cantidad - 1))}
+                        disabled={item.cantidad === 1}
+                      >➖</button>
+
+                      <span>{item.cantidad}</span>
+
+                      <button
+                        onClick={() => {
+                          if (item.cantidad < item.stock) {
+                            actualizarCantidad(item.id, item.cantidad + 1);
+                          }
+                        }}
+                        disabled={item.cantidad >= item.stock}
+                      >➕</button>
+
+                      <span> | Total: ${item.valor_venta * item.cantidad}</span>
+                    </div>
+                  </div>
                 <button className="btn-eliminar" onClick={() => quitarProducto(item.id)}>❌</button>
               </li>
             ))}

@@ -2,14 +2,20 @@
 import React from 'react';
 import { useCart } from '../context/CartContext';
 import '../styles/ProductoCard.css';
+import { toast } from 'react-toastify';
 
 const ProductoCard = ({ producto }) => {
   const { agregarProducto } = useCart();
 
-  const handleAddToCart = () => {
-    agregarProducto(producto);
-    alert(`✅ "${producto.descripcion_producto}" agregado al carrito`);
-  };
+const handleAddToCart = () => {
+  if (producto.stock === 0) {
+    toast.error(`❌ "${producto.descripcion_producto}" no está disponible actualmente.`);
+    return;
+  }
+
+  agregarProducto(producto);
+  toast.success(`✅ "${producto.descripcion_producto}" agregado al carrito`);
+};
 
   const agotado = producto.stock === 0;
   const ultimasUnidades = producto.stock > 0 && producto.stock <= 5;

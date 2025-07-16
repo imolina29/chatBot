@@ -1,0 +1,17 @@
+/* src/styles/BannerSlider.css */
+
+.banner-slider {
+  width: 100%;
+  height: 280px;
+  overflow: hidden;
+  border-radius: 8px;
+  margin-bottom: 30px;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
+}
+
+.banner-imagen {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: opacity 1s ease-in-out;
+}
