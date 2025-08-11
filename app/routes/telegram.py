@@ -23,7 +23,7 @@ from app.config import ASESORES_CHAT_IDS
 from app.config.constants import ASESOR_CHAT_ID
 from app.config import ADMIN_CHAT_IDS
 from app.db.registrar import registrar_conversacion
-from app.db.database import get_db_session
+from app.db.tienda import get_db_session
 
 router = APIRouter()
 
@@ -144,7 +144,7 @@ async def webhook(request: Request):
     if not texto.startswith("/") and chat_id not in ASESORES_CHAT_IDS and not esta_activa(chat_id):
         try:
             from app.services.productos import buscar_productos
-            from app.db.database import SessionLocal
+            from app.db.tienda import SessionLocal
             db = SessionLocal()
             productos = buscar_productos(texto, db)
 

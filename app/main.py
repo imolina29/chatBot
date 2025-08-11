@@ -16,8 +16,11 @@ from app.db.init_db import init_db
 from app.schemas import CompraItem
 from typing import List
 import traceback
-from app.db.database import SessionLocal
+from app.db.tienda import SessionLocal
+from app.db.init_db import SessionLocal
 from app.db.models import Producto
+from app.routes import pedidos
+from app.routes import email
 
 import logging
 import json
@@ -43,6 +46,8 @@ app.add_middleware(
 
 app.include_router(telegram_router)
 app.include_router(productos_router)
+app.include_router(pedidos.router)
+app.include_router(email.router)
 
 # -------------------- Validación de variables de entorno --------------------
 

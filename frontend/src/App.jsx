@@ -14,6 +14,7 @@ import Header from './components/Header';
 import Footer from './components/Footer';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import FormularioEnvio from './components/FormularioEnvio';
 
 // 🧠 Componente de bienvenida
 function Bienvenida() {
@@ -41,6 +42,7 @@ function App() {
               <Route path="/" element={<Catalogo />} />
               <Route path="/login" element={<Login />} />
               <Route path="/carrito" element={<Carrito />} />
+              <Route path="/confirmar-envio" element={<FormularioEnvio />} />
               <Route path="/admin" element={
                 <AdminRoute>
                   <AdminPanel />

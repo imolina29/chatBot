@@ -1,15 +1,14 @@
-# app/routes/product.py
-
 from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.orm import Session
 from typing import List, Optional
-from app.db.database import get_db_session
+from app.db.tienda import get_db_session
 from app.db.models import Producto
 from pydantic import BaseModel
 
 router = APIRouter(prefix="/api/productos", tags=["productos"])
 
-# Schemas
+# ----------------------------- SCHEMAS -----------------------------
+
 class ProductoSchema(BaseModel):
     descripcion_producto: str
     cantidad: int
@@ -31,8 +30,8 @@ class CompraItem(BaseModel):
     id: int
     cantidad: int
 
+# ----------------------------- ENDPOINTS -----------------------------
 
-# Crear producto
 @router.post("/", response_model=dict)
 def crear_producto(producto: ProductoSchema, db: Session = Depends(get_db_session)):
     nuevo = Producto(**producto.dict())
@@ -42,14 +41,13 @@ def crear_producto(producto: ProductoSchema, db: Session = Depends(get_db_sessio
     return {"mensaje": "✅ Producto creado correctamente", "producto_id": nuevo.id}
 
 
-# Listar todos los productos
 @router.get("/", response_model=List[ProductoResponseSchema])
 def listar_productos(db: Session = Depends(get_db_session)):
     productos = db.query(Producto).all()
+    print(f"📦 Productos encontrados: {len(productos)}")
     return productos
 
 
-# Obtener producto por ID
 @router.get("/{producto_id}", response_model=ProductoResponseSchema)
 def obtener_producto(producto_id: int, db: Session = Depends(get_db_session)):
     producto = db.query(Producto).get(producto_id)
@@ -58,7 +56,6 @@ def obtener_producto(producto_id: int, db: Session = Depends(get_db_session)):
     return producto
 
 
-# Actualizar producto
 @router.put("/{producto_id}", response_model=dict)
 def actualizar_producto(producto_id: int, datos: ProductoUpdateSchema, db: Session = Depends(get_db_session)):
     producto = db.query(Producto).get(producto_id)
@@ -70,7 +67,6 @@ def actualizar_producto(producto_id: int, datos: ProductoUpdateSchema, db: Sessi
     return {"mensaje": "✏️ Producto actualizado correctamente"}
 
 
-# Eliminar producto
 @router.delete("/{producto_id}", response_model=dict)
 def eliminar_producto(producto_id: int, db: Session = Depends(get_db_session)):
     producto = db.query(Producto).get(producto_id)
@@ -80,19 +76,50 @@ def eliminar_producto(producto_id: int, db: Session = Depends(get_db_session)):
     db.commit()
     return {"mensaje": "🗑️ Producto eliminado"}
 
-@router.post("/api/finalizar-compra")
+# -------------------- FINALIZAR COMPRA --------------------
+
+@router.post("/finalizar-compra")
 def finalizar_compra(items: List[CompraItem], db: Session = Depends(get_db_session)):
+    errores = []
+    productos_actualizados = []
+
     for item in items:
         producto = db.query(Producto).filter(Producto.id == item.id).first()
 
         if not producto:
-            raise HTTPException(status_code=404, detail=f"Producto con id {item.id} no encontrado")
+            errores.append(f"❌ Producto con ID {item.id} no encontrado")
+            continue
 
         if producto.stock < item.cantidad:
-            raise HTTPException(status_code=400, detail=f"Stock insuficiente para '{producto.descripcion_producto}'")
+            errores.append(f"⚠️ Stock insuficiente para '{producto.descripcion_producto}' (disponible: {producto.stock})")
+            continue
 
+        # Descontar stock
         producto.stock -= item.cantidad
+        productos_actualizados.append({
+            "id": producto.id,
+            "descripcion": producto.descripcion_producto,
+            "cantidad_comprada": item.cantidad,
+            "stock_restante": producto.stock
+        })
         db.add(producto)
 
+    if errores:
+        raise HTTPException(status_code=400, detail=errores)
+
     db.commit()
-    return {"message": "Compra finalizada exitosamente"}
+    return {
+        "message": "✅ Compra finalizada exitosamente",
+        "productos": productos_actualizados
+    }
+
+# -------------------- VALIDAR STOCK INDIVIDUAL --------------------
+
+@router.get("/validar-stock/{producto_id}")
+def validar_stock(producto_id: int, cantidad: int, db: Session = Depends(get_db_session)):
+    producto = db.query(Producto).get(producto_id)
+    if not producto:
+        raise HTTPException(status_code=404, detail="Producto no encontrado")
+    if producto.stock < cantidad:
+        return {"disponible": False, "stock": producto.stock, "mensaje": "Stock insuficiente"}
+    return {"disponible": True, "stock": producto.stock, "mensaje": "Stock suficiente"}

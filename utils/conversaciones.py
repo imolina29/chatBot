@@ -1,6 +1,6 @@
 # app/utils/conversaciones.py
 
-from app.db.database import SessionLocal
+from app.db.tienda import SessionLocal
 from app.db.models import Conversacion
 from typing import Dict
 from datetime import datetime

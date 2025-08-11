@@ -1,16 +1,16 @@
+# tienda.py
+from sqlalchemy.orm import sessionmaker, declarative_base
 from sqlalchemy import create_engine
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
 import os
 
-# Obtener ruta absoluta a la base de datos
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DB_PATH = os.path.join(BASE_DIR, "database.db")
+DB_PATH = os.path.join(BASE_DIR, "tienda.db")
 SQLALCHEMY_DATABASE_URL = f"sqlite:///{DB_PATH}"
 
-# Crear engine y sesión
 engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False})
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+Base = declarative_base()
 
 def get_db_session():
     db = SessionLocal()
@@ -18,5 +18,4 @@ def get_db_session():
         yield db
     finally:
         db.close()
-
-Base = declarative_base()
+print("✅ Base de datos cargada desde:", DB_PATH)

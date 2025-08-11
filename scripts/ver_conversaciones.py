@@ -1,6 +1,6 @@
 # scripts/ver_conversaciones.py
 
-from app.db.database import SessionLocal
+from app.db.tienda import SessionLocal
 from app.db.models import Conversacion
 
 def mostrar_conversaciones():

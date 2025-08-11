@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 from datetime import datetime
 from utils.mensajeria import enviar_mensaje
 from utils.conversaciones import conversaciones_activas, cerrar_conversacion, reenviar_al_asesor
-from app.db.init_db import SessionLocal
+from app.db.tienda import SessionLocal
 from app.services.productos import buscar_productos
 
 load_dotenv()
